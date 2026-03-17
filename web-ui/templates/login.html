@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PXE Boot Manager — Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d1117;
+      --bg2:     #161b22;
+      --bg3:     #1f2937;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --text2:   #8b949e;
+      --accent:  #2f81f7;
+      --accent2: #1f6feb;
+      --green:   #3fb950;
+      --red:     #f85149;
+      --radius:  10px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Background grid pattern ── */
+    body {
+      background-image:
+        linear-gradient(rgba(47,129,247,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(47,129,247,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* ── Logo / Header ── */
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 56px;
+      height: 56px;
+      background: rgba(47,129,247,.12);
+      border: 1px solid rgba(47,129,247,.3);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+    }
+    .logo-icon svg { width: 28px; height: 28px; }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .logo-sub {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: -8px;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 24px;
+    }
+
+    /* ── Error alert ── */
+    .alert {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(248,81,73,.1);
+      border: 1px solid rgba(248,81,73,.3);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--red);
+      margin-bottom: 20px;
+      animation: shake .3s ease;
+    }
+    .alert svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25%       { transform: translateX(-6px); }
+      75%       { transform: translateX(6px); }
+    }
+
+    /* ── Form ── */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--text2);
+      pointer-events: none;
+    }
+    .input-icon svg { width: 15px; height: 15px; }
+
+    .input-wrap input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 10px 12px 10px 38px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .input-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47,129,247,.15);
+    }
+
+    /* Password toggle button */
+    .pw-toggle {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text2);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      transition: color .15s;
+    }
+    .pw-toggle:hover { color: var(--text); }
+    .pw-toggle svg { width: 16px; height: 16px; }
+
+    /* ── Submit button ── */
+    .btn-login {
+      width: 100%;
+      padding: 11px;
+      background: var(--accent);
+      border: 1px solid var(--accent2);
+      border-radius: var(--radius);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+      transition: background .15s, transform .1s;
+    }
+    .btn-login:hover   { background: var(--accent2); }
+    .btn-login:active  { transform: scale(.98); }
+    .btn-login svg { width: 15px; height: 15px; }
+
+    /* Spinner inside button */
+    .btn-login .spinner {
+      display: none;
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer hint ── */
+    .login-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .login-footer kbd {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+      font-family: monospace;
+      color: var(--text);
+    }
+
+    /* ── Server badge ── */
+    .server-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(63,185,80,.08);
+      border: 1px solid rgba(63,185,80,.2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--green);
+      font-family: monospace;
+      margin-bottom: 32px;
+    }
+    .server-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .3; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8M12 17v4"/>
+      </svg>
+    </div>
+    <div class="logo-title">PXE Boot Manager</div>
+    <div class="logo-sub">Network OS Deployment Server</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sign in</div>
+    <div class="card-sub">Enter your credentials to access the PXE manager.</div>
+
+    {% if error %}
+    <div class="alert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/login" id="loginForm">
+      <input type="hidden" name="next" value="{{ next }}" />
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="admin"
+            autocomplete="username"
+            autofocus
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+          <button type="button" class="pw-toggle" id="pwToggle" title="Show/hide password">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <div class="spinner" id="spinner"></div>
+        <svg id="loginIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Sign in
+      </button>
+    </form>
+  </div>
+
+  <div class="login-footer">
+    Default credentials: <kbd>admin</kbd> / <kbd>pxeadmin</kbd>
+  </div>
+
+</div>
+
+<script>
+  // Password show/hide toggle
+  const pwInput  = document.getElementById('password');
+  const pwToggle = document.getElementById('pwToggle');
+  const eyeIcon  = document.getElementById('eyeIcon');
+
+  const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  const eyeOff  = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+
+  pwToggle.addEventListener('click', () => {
+    const show = pwInput.type === 'password';
+    pwInput.type = show ? 'text' : 'password';
+    eyeIcon.innerHTML = show ? eyeOff : eyeOpen;
+  });
+
+  // Show spinner on submit
+  document.getElementById('loginForm').addEventListener('submit', () => {
+    const btn     = document.getElementById('loginBtn');
+    const spinner = document.getElementById('spinner');
+    const icon    = document.getElementById('loginIcon');
+    btn.disabled     = true;
+    spinner.style.display = 'block';
+    icon.style.display    = 'none';
+  });
+</script>
+</body>
+</html>

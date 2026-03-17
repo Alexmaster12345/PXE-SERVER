@@ -1,0 +1,16 @@
+[Unit]
+Description=PXE Boot Manager Web UI
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/pxe-webui
+ExecStart=/opt/pxe-webui-venv/bin/python3 /opt/pxe-webui/app.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

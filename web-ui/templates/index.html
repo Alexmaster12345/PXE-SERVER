@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PXE Boot Manager</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    <span>PXE Manager</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-tab="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="#" class="nav-item" data-tab="upload">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload OS
+    </a>
+    <a href="#" class="nav-item" data-tab="images">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      OS Images
+    </a>
+    <a href="#" class="nav-item" data-tab="menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Boot Menu
+    </a>
+  </nav>
+  <div class="sidebar-server">
+    <div class="server-label">Server IP</div>
+    <div class="server-ip">{{ server_ip }}</div>
+    <div class="service-pills" id="servicePills"></div>
+  </div>
+</aside>
+
+<!-- ── Main ─────────────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- ── Header ─── -->
+  <header class="topbar">
+    <div class="topbar-title" id="tabTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="refreshAll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+      <div class="user-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        {{ session.get('username', 'admin') }}
+      </div>
+      <a href="/logout" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════ DASHBOARD TAB ══════════════════════════ -->
+  <section class="tab-panel active" id="tab-dashboard">
+    <div class="stat-grid" id="statGrid">
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div>
+          <div class="stat-value" id="statOSCount">—</div>
+          <div class="stat-label">OS Images Ready</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div>
+          <div class="stat-value" id="statDnsmasq">—</div>
+          <div class="stat-label">dnsmasq (DHCP+TFTP)</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div>
+          <div class="stat-value" id="statNginx">—</div>
+          <div class="stat-label">nginx (HTTP)</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div>
+          <div class="stat-value" id="statTotalSize">—</div>
+          <div class="stat-label">Total Image Size (MB)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Installed OS Images</div>
+    <div class="os-grid" id="dashOsGrid">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ UPLOAD TAB ════════════════════════════ -->
+  <section class="tab-panel" id="tab-upload">
+    <div class="card upload-card">
+      <div class="card-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload OS ISO
+      </div>
+
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="form-row">
+          <div class="form-group">
+            <label>OS Display Name</label>
+            <input type="text" id="osLabel" name="label" placeholder="e.g. Rocky Linux 9.4" required />
+          </div>
+          <div class="form-group">
+            <label>OS Type</label>
+            <select name="os_type" id="osType">
+              <option value="rocky">Rocky Linux / RHEL / CentOS</option>
+              <option value="ubuntu">Ubuntu / Debian</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="drop-text">Drag &amp; drop your .iso file here</div>
+          <div class="drop-sub">or click to browse</div>
+          <input type="file" id="isoFile" name="iso_file" accept=".iso" hidden />
+          <div class="drop-filename" id="dropFilename"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="uploadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload &amp; Install
+        </button>
+      </form>
+
+      <!-- Progress -->
+      <div class="progress-section" id="progressSection" style="display:none">
+        <div class="progress-header">
+          <span id="progressLabel">Processing...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-log" id="progressLog"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ IMAGES TAB ════════════════════════════ -->
+  <section class="tab-panel" id="tab-images">
+    <div class="section-title">
+      Installed OS Images
+      <button class="btn btn-ghost btn-sm" onclick="loadImages()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+    <div class="os-table-wrap">
+      <table class="os-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>vmlinuz</th>
+            <th>initrd</th>
+            <th>Size (MB)</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="imagesTableBody">
+          <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ MENU TAB ══════════════════════════════ -->
+  <section class="tab-panel" id="tab-menu">
+    <div class="card">
+      <div class="card-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        PXE Boot Menu Editor
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="loadMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Reload
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="saveMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save
+          </button>
+        </div>
+      </div>
+      <textarea class="menu-editor" id="menuEditor" spellcheck="false"></textarea>
+      <div class="save-status" id="saveStatus"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Toast ──────────────────────────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ── Confirm Modal ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
+  <div class="modal">
+    <div class="modal-title">Delete OS Image</div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

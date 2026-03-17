@@ -1,0 +1,52 @@
+# =============================================================================
+# PXE Boot Menu
+# =============================================================================
+
+UI vesamenu.c32
+PROMPT 0
+
+MENU TITLE  PXE Network Boot Server
+MENU COLOR  title        * #00AAFF #000000 *
+MENU COLOR  border       * #004488 #000000 *
+MENU COLOR  sel          * #000000 #AAFF00 *
+MENU COLOR  unsel        * #FFFFFF #000000 *
+MENU COLOR  hotkey       * #FF4400 #000000 *
+MENU COLOR  tabmsg       * #AAAAAA #000000 *
+
+TIMEOUT 600
+TOTALTIMEOUT 6000
+
+# -----------------------------------------------------------------------------
+LABEL rocky-10-minimum
+    MENU LABEL ^1 Install Rocky Linux 10 Minimal
+    MENU DEFAULT
+    KERNEL images/rocky-10-minimum/vmlinuz
+    APPEND initrd=images/rocky-10-minimum/initrd.img inst.stage2=http://192.168.50.225/rocky-10-minimum inst.repo=http://192.168.50.225/rocky-10-minimum/Minimal inst.ks=http://192.168.50.225/ks/rocky-10-minimum-ks.cfg inst.waitfornet=60 inst.text ip=dhcp
+
+# -----------------------------------------------------------------------------
+LABEL rocky9-install
+    MENU LABEL ^2 Install Rocky Linux 9
+    KERNEL images/rocky9/vmlinuz
+    APPEND initrd=images/rocky9/initrd.img inst.stage2=http://192.168.50.225/rocky9 inst.repo=http://192.168.50.225/rocky9 inst.ks=http://192.168.50.225/ks/rocky9-ks.cfg quiet
+
+# -----------------------------------------------------------------------------
+LABEL ubuntu2404-install
+    MENU LABEL ^3 Install Ubuntu 24.04 LTS
+    KERNEL images/ubuntu2404/vmlinuz
+    APPEND initrd=images/ubuntu2404/initrd.gz url=http://192.168.50.225/ks/ubuntu2404-preseed.cfg auto=true priority=critical quiet splash
+
+# -----------------------------------------------------------------------------
+LABEL memtest
+    MENU LABEL ^4 Memory Test (Memtest86+)
+    KERNEL images/memtest/memtest86+.bin
+    APPEND -
+
+# -----------------------------------------------------------------------------
+LABEL local
+    MENU LABEL ^5 Boot from local disk
+    LOCALBOOT 0
+
+# -----------------------------------------------------------------------------
+LABEL reboot
+    MENU LABEL ^6 Reboot machine
+    COM32 reboot.c32
